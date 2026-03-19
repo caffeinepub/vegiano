@@ -1,38 +1,50 @@
-# VEGIANO - Fresh Vegetable Delivery Website
+# VEGIANO
 
 ## Current State
-New project — no existing application files.
+Full-stack VEGIANO website with hero, about, products, why-us, order form, delivery, testimonials, contact, and footer sections. Cart drawer via Sheet component, floating WhatsApp button, fade-in animations, green/white/beige theme.
 
 ## Requested Changes (Diff)
 
 ### Add
-- Full multi-section marketing website for VEGIANO fresh vegetable delivery brand
-- Hero section with farm background image, headline, subtext, and CTA buttons
-- About Us section with brand story emphasizing direct-from-farm sourcing
-- Products section with 6 vegetable cards (image, name, price, Add to Cart button)
-- Cart system: floating cart icon with item count, add/remove items, quantity management
-- Why Choose Us section with 4 benefit cards
-- Order section with form (name, phone, address, selected items) that opens WhatsApp with pre-filled message to 8293692735
-- Delivery Information section with areas served and delivery times
-- Testimonials section with 3 dummy customer reviews
-- Contact section with phone, WhatsApp button, and Kolkata location
-- Footer with logo, quick links, social icons
-- Floating WhatsApp chat button
-- Smooth scrolling navigation
-- Fully responsive / mobile-friendly layout
+- Sticky top announcement bar: "🚚 Same Day Delivery | 🥬 Fresh from Farms | 📞 Order on WhatsApp"
+- Trust badges below hero CTA: "✔ 50+ Farmers | ✔ 100% Fresh | ✔ No Middleman"
+- "Best Seller" / "Popular" tags on tomato and spinach product cards
+- "Limited Stock" / "Fresh Today" badge variants on product cards
+- Quantity selector (+ / -) on product cards before Add to Cart
+- "⚡ Takes less than 30 seconds to order" line above order form
+- Improved order button: "🚀 Place Order Instantly on WhatsApp"
+- Auto-formatted WhatsApp message: Name / Address / Items
+- Sticky mobile CTA button at bottom for order/WhatsApp
+- Trust & social proof section above testimonials: "Trusted by 500+ Families in Kolkata", animated counters (Orders: 1200+, Rating: 4.8⭐)
+- Delivery section: urgency line "Limited delivery slots available each day", "Order before 12 PM → Same Day Delivery" highlight
+- Contact: bigger WhatsApp card, clickable WhatsApp button, "Instant Reply within minutes"
+- Footer: "Direct from Farmers | No Storage | No Chemicals" + mini CTA to WhatsApp
+- 5-second popup: "Get fresh vegetables today 🥬 – Order now on WhatsApp"
+- Cart: UPI payment option (QR code + UPI ID), Cash on Delivery option, order confirmation screen with "✅ Order Placed Successfully!", "Send Order to WhatsApp" button
+- Trust elements in cart/checkout: "Secure Payment", "Cash on Delivery Available", "Fresh Guarantee"
 
 ### Modify
-- N/A (new project)
+- Hero CTA primary button: "Order Now on WhatsApp" (was "Order Now")
+- Product cards: add zoom on image hover (already exists), add qty selector before Add to Cart
+- WhatsApp floating button: keep pulse animation, shift to bottom-right
+- Order form WhatsApp message format: structured Name/Address/Items
+- Contact section: WhatsApp card larger/highlighted vs others
+- Color palette: deepen to #1B5E20, more premium shadows, increased section spacing
 
 ### Remove
-- N/A (new project)
+- Nothing removed
 
 ## Implementation Plan
-1. Build single-page React app with all sections in App.tsx
-2. Cart state managed via React useState (items array)
-3. Order form sends WhatsApp deep link with pre-filled message containing order details
-4. Floating WhatsApp button always visible bottom-right
-5. Smooth scroll via CSS scroll-behavior and anchor links
-6. Responsive layout with Tailwind CSS breakpoints
-7. Green/white/light-brown color palette via Tailwind custom classes
-8. Product images sourced from generated assets
+1. Update index.css: deeper green tokens, premium shadow classes, counter animation keyframes, popup animation
+2. Update App.tsx:
+   - Add sticky top bar component above navbar
+   - Update hero: new CTA wording, trust badges
+   - Update ProductCard: qty selector state, Best Seller/Popular/Fresh Today/Limited Stock badges
+   - Add SocialProof section (counters with animation) above testimonials
+   - Update order section: urgency text, structured WhatsApp message
+   - Update delivery section: urgency line, highlighted "Order before 12 PM" card
+   - Update contact section: WhatsApp card larger/featured
+   - Update footer: tagline + mini CTA
+   - Add 5-second popup component
+   - Add sticky mobile WhatsApp CTA button
+   - Update cart/checkout: add payment method selection (UPI/COD), QR code placeholder, order confirmation screen

@@ -85,8 +85,9 @@ export default {
       },
       boxShadow: {
         xs: "0 1px 2px 0 rgba(0,0,0,0.05)",
-        card: "0 4px 20px 0 rgba(0,0,0,0.08)",
-        "card-hover": "0 8px 30px 0 rgba(0,0,0,0.14)",
+        card: "0 4px 24px 0 rgba(27,94,32,0.10)",
+        "card-hover": "0 8px 40px 0 rgba(27,94,32,0.20)",
+        popup: "0 16px 48px 0 rgba(0,0,0,0.18)",
       },
       keyframes: {
         "accordion-down": {
@@ -98,18 +99,18 @@ export default {
           to: { height: "0" },
         },
         "slide-in-right": {
-          from: { transform: "translateX(100%)" },
-          to: { transform: "translateX(0)" },
+          from: { transform: "translateX(120%)", opacity: "0" },
+          to: { transform: "translateX(0)", opacity: "1" },
         },
         "slide-out-right": {
-          from: { transform: "translateX(0)" },
-          to: { transform: "translateX(100%)" },
+          from: { transform: "translateX(0)", opacity: "1" },
+          to: { transform: "translateX(120%)", opacity: "0" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "slide-in-right": "slide-in-right 0.3s ease-out",
+        "slide-in-right": "slide-in-right 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
         "slide-out-right": "slide-out-right 0.3s ease-in",
       },
     },

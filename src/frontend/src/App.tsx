@@ -11,8 +11,11 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import {
   BadgeDollarSign,
+  CheckCircle,
+  ChevronLeft,
   ChevronRight,
   Clock,
+  Copy,
   Facebook,
   FlaskConical,
   Instagram,
@@ -23,6 +26,7 @@ import {
   Minus,
   Phone,
   Plus,
+  ShieldCheck,
   ShoppingCart,
   Sprout,
   Star,
@@ -30,7 +34,9 @@ import {
   Truck,
   Twitter,
   X,
+  Zap,
 } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -41,11 +47,15 @@ interface Product {
   priceNum: number;
   unit: string;
   image: string;
+  tag?: "bestseller" | "popular" | null;
+  freshTag?: "fresh" | "limited";
 }
 
 interface CartItem extends Product {
   qty: number;
 }
+
+type CartStep = 1 | 2 | 3 | 4;
 
 // ── Constants ───────────────────────────────────────────────────────────────────
 const NAV_LINKS = [
@@ -65,6 +75,8 @@ const PRODUCTS: Product[] = [
     priceNum: 30,
     unit: "kg",
     image: "/assets/generated/tomato.dim_400x400.jpg",
+    tag: "bestseller",
+    freshTag: "fresh",
   },
   {
     id: "potato",
@@ -73,6 +85,8 @@ const PRODUCTS: Product[] = [
     priceNum: 25,
     unit: "kg",
     image: "/assets/generated/potato.dim_400x400.jpg",
+    tag: null,
+    freshTag: "fresh",
   },
   {
     id: "spinach",
@@ -81,6 +95,8 @@ const PRODUCTS: Product[] = [
     priceNum: 15,
     unit: "bunch",
     image: "/assets/generated/spinach.dim_400x400.jpg",
+    tag: "popular",
+    freshTag: "limited",
   },
   {
     id: "carrot",
@@ -89,6 +105,8 @@ const PRODUCTS: Product[] = [
     priceNum: 40,
     unit: "kg",
     image: "/assets/generated/carrot.dim_400x400.jpg",
+    tag: null,
+    freshTag: "fresh",
   },
   {
     id: "broccoli",
@@ -97,6 +115,8 @@ const PRODUCTS: Product[] = [
     priceNum: 60,
     unit: "kg",
     image: "/assets/generated/broccoli.dim_400x400.jpg",
+    tag: null,
+    freshTag: "fresh",
   },
   {
     id: "cucumber",
@@ -105,6 +125,8 @@ const PRODUCTS: Product[] = [
     priceNum: 20,
     unit: "kg",
     image: "/assets/generated/cucumber.dim_400x400.jpg",
+    tag: null,
+    freshTag: "fresh",
   },
 ];
 
@@ -170,7 +192,9 @@ const DELIVERY_AREAS = [
   "Tollygunge",
 ];
 
-// ── Hook: scroll animation ────────────────────────────────────────────────────
+const WA_URL = "https://wa.me/918293692735";
+
+// ── Hooks ────────────────────────────────────────────────────────────────────
 function setupFadeIn() {
   const els = document.querySelectorAll(".fade-in-up, .fade-in");
   const io = new IntersectionObserver(
@@ -181,9 +205,7 @@ function setupFadeIn() {
     },
     { threshold: 0.12 },
   );
-  for (const el of els) {
-    io.observe(el);
-  }
+  for (const el of els) io.observe(el);
   return io;
 }
 
@@ -194,16 +216,184 @@ function useFadeIn() {
   }, []);
 }
 
+// ── Animated Counter ─────────────────────────────────────────────────────────
+function AnimatedCounter({
+  target,
+  isFloat,
+  suffix,
+  enabled,
+}: {
+  target: number;
+  isFloat?: boolean;
+  suffix?: string;
+  enabled: boolean;
+}) {
+  const [val, setVal] = useState(0);
+
+  useEffect(() => {
+    if (!enabled) return;
+    const duration = 1500;
+    const startTime = performance.now();
+    const tick = (now: number) => {
+      const progress = Math.min((now - startTime) / duration, 1);
+      const eased = 1 - (1 - progress) ** 3;
+      const current = eased * target;
+      setVal(isFloat ? Math.round(current * 10) / 10 : Math.floor(current));
+      if (progress < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [enabled, target, isFloat]);
+
+  return (
+    <span>
+      {isFloat ? val.toFixed(1) : val}
+      {suffix}
+    </span>
+  );
+}
+
+// ── Social Proof Section ─────────────────────────────────────────────────────
+function SocialProofSection() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) setVisible(true);
+      },
+      { threshold: 0.3 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  return (
+    <section ref={ref} className="py-20 bg-[#1B5E20] text-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 className="text-2xl sm:text-3xl font-bold mb-2 fade-in-up">
+          Trusted by 500+ Families in Kolkata
+        </h2>
+        <p className="text-green-200 text-sm mb-12 fade-in-up stagger-1">
+          Fresh. Reliable. Loved by thousands.
+        </p>
+        <div className="grid grid-cols-3 gap-8 max-w-2xl mx-auto">
+          <div className="text-center fade-in-up stagger-1">
+            <div className="text-4xl sm:text-5xl font-bold text-green-300 mb-1">
+              <AnimatedCounter target={1200} suffix="+" enabled={visible} />
+            </div>
+            <div className="text-green-100 text-sm font-medium">
+              Orders Delivered
+            </div>
+          </div>
+          <div className="text-center fade-in-up stagger-2">
+            <div className="text-4xl sm:text-5xl font-bold text-green-300 mb-1">
+              <AnimatedCounter target={500} suffix="+" enabled={visible} />
+            </div>
+            <div className="text-green-100 text-sm font-medium">
+              Happy Families
+            </div>
+          </div>
+          <div className="text-center fade-in-up stagger-3">
+            <div className="text-4xl sm:text-5xl font-bold text-green-300 mb-1">
+              <AnimatedCounter
+                target={4.8}
+                isFloat
+                suffix=" ⭐"
+                enabled={visible}
+              />
+            </div>
+            <div className="text-green-100 text-sm font-medium">
+              Average Rating
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ── WhatsApp Popup ────────────────────────────────────────────────────────────
+function WhatsAppPopup() {
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    if (sessionStorage.getItem("vegiano_popup_shown")) return;
+    const t = setTimeout(() => {
+      setShow(true);
+      sessionStorage.setItem("vegiano_popup_shown", "1");
+    }, 5000);
+    return () => clearTimeout(t);
+  }, []);
+
+  return (
+    <AnimatePresence>
+      {show && (
+        <motion.div
+          initial={{ x: 120, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          exit={{ x: 120, opacity: 0 }}
+          transition={{ type: "spring", stiffness: 280, damping: 26 }}
+          className="fixed bottom-24 right-4 z-50 w-72 bg-white rounded-2xl shadow-popup border-l-4 border-[#1B5E20] p-4"
+          data-ocid="popup.card"
+        >
+          <button
+            type="button"
+            onClick={() => setShow(false)}
+            className="absolute top-2 right-2 w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+            aria-label="Close popup"
+            data-ocid="popup.close_button"
+          >
+            <X className="w-3.5 h-3.5 text-gray-500" />
+          </button>
+          <div className="flex items-start gap-3 mb-3">
+            <span className="text-2xl">🥬</span>
+            <div>
+              <p className="font-semibold text-gray-900 text-sm leading-snug">
+                Get fresh vegetables today!
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Farm to doorstep in hours
+              </p>
+            </div>
+          </div>
+          <a
+            href={WA_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full bg-[#1B5E20] hover:bg-[#2E7D32] text-white rounded-xl py-2 text-sm font-semibold flex items-center justify-center gap-2 transition-colors"
+            data-ocid="popup.primary_button"
+          >
+            <MessageCircle className="w-4 h-4" /> Order now on WhatsApp →
+          </a>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 // ── Main App ───────────────────────────────────────────────────────────────────
 export default function App() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
+  const [cartStep, setCartStep] = useState<CartStep>(1);
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+
+  // Standalone order form state
   const [orderName, setOrderName] = useState("");
   const [orderPhone, setOrderPhone] = useState("");
   const [orderAddress, setOrderAddress] = useState("");
   const [orderItems, setOrderItems] = useState("");
+
+  // Checkout state
+  const [checkoutName, setCheckoutName] = useState("");
+  const [checkoutPhone, setCheckoutPhone] = useState("");
+  const [checkoutAddress, setCheckoutAddress] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<"upi" | "cod">("upi");
+  const [upiCopied, setUpiCopied] = useState(false);
 
   useFadeIn();
 
@@ -234,14 +424,14 @@ export default function App() {
   const cartCount = cart.reduce((s, i) => s + i.qty, 0);
   const cartTotal = cart.reduce((s, i) => s + i.priceNum * i.qty, 0);
 
-  const addToCart = useCallback((product: Product) => {
+  const addToCart = useCallback((product: Product, qty = 1) => {
     setCart((prev) => {
       const existing = prev.find((i) => i.id === product.id);
       if (existing)
         return prev.map((i) =>
-          i.id === product.id ? { ...i, qty: i.qty + 1 } : i,
+          i.id === product.id ? { ...i, qty: i.qty + qty } : i,
         );
-      return [...prev, { ...product, qty: 1 }];
+      return [...prev, { ...product, qty }];
     });
   }, []);
 
@@ -258,20 +448,43 @@ export default function App() {
   }, []);
 
   const buildWhatsAppUrl = (message: string) =>
-    `https://wa.me/918293692735?text=${encodeURIComponent(message)}`;
-
-  const handleCartOrder = () => {
-    const items = cart
-      .map((i) => `${i.name} x${i.qty} (${i.price}/${i.unit})`)
-      .join(", ");
-    const msg = `Hello VEGIANO! I'd like to place an order.\nItems: ${items}\nTotal: ₹${cartTotal}`;
-    window.open(buildWhatsAppUrl(msg), "_blank");
-  };
+    `${WA_URL}?text=${encodeURIComponent(message)}`;
 
   const handleFormOrder = (e: React.FormEvent) => {
     e.preventDefault();
-    const msg = `Hello VEGIANO! I'd like to place an order.\nName: ${orderName}\nPhone: ${orderPhone}\nAddress: ${orderAddress}\nItems: ${orderItems || "(please specify)"}`;
+    const msg = `Hello VEGIANO! New Order Request:\nName: ${orderName}\nPhone: ${orderPhone}\nAddress: ${orderAddress}\nItems: ${orderItems || "(please specify)"}\nTotal: ₹${cartTotal > 0 ? cartTotal : "as discussed"}`;
     window.open(buildWhatsAppUrl(msg), "_blank");
+  };
+
+  const handleSendOrderToWhatsApp = () => {
+    const items = cart
+      .map((i) => `${i.name} x${i.qty} (${i.price}/${i.unit})`)
+      .join(", ");
+    const msg = `Hello VEGIANO! New Order:\nName: ${checkoutName}\nPhone: ${checkoutPhone}\nAddress: ${checkoutAddress}\nItems: ${items}\nTotal: ₹${cartTotal}\nPayment: ${paymentMethod === "upi" ? "UPI Payment" : "Cash on Delivery"}`;
+    window.open(buildWhatsAppUrl(msg), "_blank");
+  };
+
+  const handleContinueShopping = () => {
+    setCartOpen(false);
+    setTimeout(() => {
+      setCartStep(1);
+      setCart([]);
+      setCheckoutName("");
+      setCheckoutPhone("");
+      setCheckoutAddress("");
+      setPaymentMethod("upi");
+    }, 300);
+  };
+
+  const handleCartSheetChange = (open: boolean) => {
+    setCartOpen(open);
+    if (!open) setTimeout(() => setCartStep(1), 300);
+  };
+
+  const copyUPI = () => {
+    navigator.clipboard.writeText("vegiano@upi");
+    setUpiCopied(true);
+    setTimeout(() => setUpiCopied(false), 2000);
   };
 
   const scrollTo = (id: string) => {
@@ -279,96 +492,532 @@ export default function App() {
     setMenuOpen(false);
   };
 
-  return (
-    <div className="min-h-screen font-poppins overflow-x-hidden">
-      {/* Announcement Bar */}
-      <div className="bg-vegiano-green text-white text-center py-2 px-4 text-xs sm:text-sm font-medium">
-        🌿 Free delivery on orders above ₹299 &nbsp;|&nbsp; Call us:{" "}
-        <a href="tel:+918293692735" className="underline font-semibold">
-          +91 82936 92735
-        </a>
-      </div>
-
-      {/* Navbar */}
-      <header
-        className={`sticky top-0 z-50 bg-white transition-shadow duration-300 ${scrolled ? "shadow-md" : "shadow-sm"}`}
-      >
-        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-          <button
+  // ── Cart Steps Renderer ──────────────────────────────────────────────────────
+  const renderCartStep1 = () => (
+    <>
+      {cart.length === 0 ? (
+        <div
+          className="flex-1 flex flex-col items-center justify-center gap-3 text-muted-foreground"
+          data-ocid="cart.empty_state"
+        >
+          <ShoppingCart className="w-12 h-12 opacity-30" />
+          <p className="font-medium">Your cart is empty</p>
+          <p className="text-sm text-center">
+            Add some fresh vegetables to get started!
+          </p>
+          <Button
             type="button"
-            onClick={() => scrollTo("home")}
-            className="flex items-center gap-2 text-vegiano-green font-bold text-xl shrink-0"
-            data-ocid="nav.link"
+            onClick={() => {
+              setCartOpen(false);
+              scrollTo("products");
+            }}
+            className="bg-vegiano-green hover:bg-vegiano-green-dark text-white rounded-full px-6"
+            data-ocid="cart.primary_button"
           >
-            <Leaf className="w-6 h-6 fill-current" />
-            <span className="tracking-wide">VEGIANO</span>
-          </button>
+            Browse Products
+          </Button>
+        </div>
+      ) : (
+        <>
+          <div className="flex-1 overflow-y-auto py-4 space-y-3">
+            {cart.map((item, idx) => (
+              <div
+                key={item.id}
+                className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors"
+                data-ocid={`cart.item.${idx + 1}`}
+              >
+                <img
+                  src={item.image}
+                  alt={item.name}
+                  className="w-14 h-14 rounded-lg object-cover"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm truncate">{item.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {item.price}/{item.unit}
+                  </p>
+                  <p className="text-xs font-medium text-vegiano-green">
+                    ₹{item.priceNum * item.qty}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => updateQty(item.id, -1)}
+                    className="w-7 h-7 rounded-full bg-white border border-border flex items-center justify-center hover:bg-vegiano-green-light transition-colors"
+                    data-ocid={`cart.secondary_button.${idx + 1}`}
+                  >
+                    <Minus className="w-3 h-3" />
+                  </button>
+                  <span className="w-6 text-center text-sm font-semibold">
+                    {item.qty}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => updateQty(item.id, 1)}
+                    className="w-7 h-7 rounded-full bg-white border border-border flex items-center justify-center hover:bg-vegiano-green-light transition-colors"
+                    data-ocid={`cart.primary_button.${idx + 1}`}
+                  >
+                    <Plus className="w-3 h-3" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeItem(item.id)}
+                    className="ml-1 w-7 h-7 rounded-full bg-white border border-red-200 flex items-center justify-center hover:bg-red-50 transition-colors"
+                    data-ocid={`cart.delete_button.${idx + 1}`}
+                  >
+                    <Trash2 className="w-3 h-3 text-red-400" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="border-t border-border pt-4 space-y-4">
+            <div className="flex items-center justify-between font-semibold">
+              <span>Total</span>
+              <span className="text-vegiano-green text-lg">₹{cartTotal}</span>
+            </div>
+            <Button
+              type="button"
+              onClick={() => setCartStep(2)}
+              className="w-full bg-vegiano-green hover:bg-vegiano-green-dark text-white rounded-full h-12 text-base font-semibold flex items-center justify-center gap-2"
+              data-ocid="cart.submit_button"
+            >
+              Proceed to Checkout <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </>
+      )}
+    </>
+  );
 
-          <ul className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-700">
-            {NAV_LINKS.map((l) => (
-              <li key={l.id}>
+  const renderCartStep2 = () => (
+    <>
+      <button
+        type="button"
+        onClick={() => setCartStep(1)}
+        className="flex items-center gap-1 text-sm text-gray-500 hover:text-vegiano-green transition-colors mb-4"
+        data-ocid="cart.secondary_button"
+      >
+        <ChevronLeft className="w-4 h-4" /> Back to Cart
+      </button>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          setCartStep(3);
+        }}
+        className="flex-1 flex flex-col gap-4"
+      >
+        <div className="space-y-3 flex-1 overflow-y-auto">
+          <div className="space-y-1.5">
+            <label
+              className="text-sm font-semibold text-gray-700"
+              htmlFor="checkout-name"
+            >
+              Full Name
+            </label>
+            <Input
+              id="checkout-name"
+              placeholder="Your name"
+              value={checkoutName}
+              onChange={(e) => setCheckoutName(e.target.value)}
+              required
+              className="rounded-xl"
+              data-ocid="cart.input"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label
+              className="text-sm font-semibold text-gray-700"
+              htmlFor="checkout-phone"
+            >
+              Phone Number
+            </label>
+            <Input
+              id="checkout-phone"
+              type="tel"
+              placeholder="+91 XXXXX XXXXX"
+              value={checkoutPhone}
+              onChange={(e) => setCheckoutPhone(e.target.value)}
+              required
+              className="rounded-xl"
+              data-ocid="cart.input"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label
+              className="text-sm font-semibold text-gray-700"
+              htmlFor="checkout-address"
+            >
+              Delivery Address
+            </label>
+            <Textarea
+              id="checkout-address"
+              placeholder="Your full address..."
+              value={checkoutAddress}
+              onChange={(e) => setCheckoutAddress(e.target.value)}
+              required
+              rows={3}
+              className="rounded-xl resize-none"
+              data-ocid="cart.textarea"
+            />
+          </div>
+
+          {/* Order summary */}
+          <div className="bg-vegiano-green-light rounded-xl p-3 space-y-1.5">
+            <p className="text-xs font-semibold text-vegiano-green uppercase tracking-wide mb-2">
+              Order Summary
+            </p>
+            {cart.map((item) => (
+              <div key={item.id} className="flex justify-between text-sm">
+                <span className="text-gray-700">
+                  {item.name} x{item.qty}
+                </span>
+                <span className="font-medium">₹{item.priceNum * item.qty}</span>
+              </div>
+            ))}
+            <Separator className="my-2" />
+            <div className="flex justify-between text-sm font-bold">
+              <span>Total</span>
+              <span className="text-vegiano-green">₹{cartTotal}</span>
+            </div>
+          </div>
+
+          {/* Trust row */}
+          <div className="flex items-center justify-center gap-4 text-xs text-gray-500">
+            <span className="flex items-center gap-1">
+              <ShieldCheck className="w-3.5 h-3.5 text-vegiano-green" /> Secure
+            </span>
+            <span className="flex items-center gap-1">
+              <Truck className="w-3.5 h-3.5 text-vegiano-green" /> COD Available
+            </span>
+            <span className="flex items-center gap-1">
+              <Leaf className="w-3.5 h-3.5 text-vegiano-green" /> Fresh
+              Guarantee
+            </span>
+          </div>
+        </div>
+
+        <Button
+          type="submit"
+          className="w-full bg-vegiano-green hover:bg-vegiano-green-dark text-white rounded-full h-12 text-base font-semibold mt-2"
+          data-ocid="cart.submit_button"
+        >
+          Choose Payment <ChevronRight className="w-4 h-4 ml-1" />
+        </Button>
+      </form>
+    </>
+  );
+
+  const renderCartStep3 = () => (
+    <>
+      <button
+        type="button"
+        onClick={() => setCartStep(2)}
+        className="flex items-center gap-1 text-sm text-gray-500 hover:text-vegiano-green transition-colors mb-4"
+        data-ocid="cart.secondary_button"
+      >
+        <ChevronLeft className="w-4 h-4" /> Back
+      </button>
+      <div className="flex-1 overflow-y-auto space-y-4">
+        <p className="text-sm font-semibold text-gray-700">
+          Choose Payment Method
+        </p>
+
+        {/* UPI Option */}
+        <div
+          onKeyDown={(e) => e.key === "Enter" && setPaymentMethod("upi")}
+          onClick={() => setPaymentMethod("upi")}
+          className={`rounded-2xl p-4 border-2 cursor-pointer transition-all duration-200 ${
+            paymentMethod === "upi"
+              ? "border-vegiano-green bg-vegiano-green-light"
+              : "border-border bg-white hover:border-vegiano-green/40"
+          }`}
+          data-ocid="cart.radio"
+        >
+          <div className="flex items-center gap-3 mb-3">
+            <div
+              className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                paymentMethod === "upi"
+                  ? "border-vegiano-green"
+                  : "border-gray-300"
+              }`}
+            >
+              {paymentMethod === "upi" && (
+                <div className="w-2 h-2 rounded-full bg-vegiano-green" />
+              )}
+            </div>
+            <div>
+              <p className="font-semibold text-sm">UPI Payment</p>
+              <p className="text-xs text-gray-500">Pay via any UPI app</p>
+            </div>
+            <span className="ml-auto text-xs bg-amber-100 text-amber-700 font-semibold px-2 py-0.5 rounded-full">
+              Recommended
+            </span>
+          </div>
+          {paymentMethod === "upi" && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 bg-white rounded-xl p-3 border border-border">
+                <span className="flex-1 font-mono text-sm text-gray-700">
+                  vegiano@upi
+                </span>
                 <button
                   type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    copyUPI();
+                  }}
+                  className="flex items-center gap-1 text-xs text-vegiano-green font-medium hover:underline"
+                  data-ocid="cart.secondary_button"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  {upiCopied ? "Copied!" : "Copy"}
+                </button>
+              </div>
+              <div className="flex justify-center">
+                <div className="w-40 h-40 border-2 border-dashed border-vegiano-green rounded-2xl flex flex-col items-center justify-center bg-white gap-2">
+                  <div className="grid grid-cols-5 gap-0.5 opacity-40">
+                    {Array.from({ length: 25 }).map((_, i) => (
+                      <div
+                        // biome-ignore lint/suspicious/noArrayIndexKey: static decorative QR grid
+                        key={i}
+                        className={`w-3 h-3 rounded-sm ${
+                          [
+                            0, 1, 2, 5, 6, 8, 10, 14, 16, 18, 20, 22, 24,
+                          ].includes(i)
+                            ? "bg-vegiano-green-dark"
+                            : "bg-transparent"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-xs text-vegiano-green font-semibold">
+                    Scan QR to Pay
+                  </p>
+                </div>
+              </div>
+              <p className="text-center text-sm font-semibold text-gray-700">
+                Amount: ₹{cartTotal}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* COD Option */}
+        <div
+          onKeyDown={(e) => e.key === "Enter" && setPaymentMethod("cod")}
+          onClick={() => setPaymentMethod("cod")}
+          className={`rounded-2xl p-4 border-2 cursor-pointer transition-all duration-200 ${
+            paymentMethod === "cod"
+              ? "border-vegiano-green bg-vegiano-green-light"
+              : "border-border bg-white hover:border-vegiano-green/40"
+          }`}
+          data-ocid="cart.radio"
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                paymentMethod === "cod"
+                  ? "border-vegiano-green"
+                  : "border-gray-300"
+              }`}
+            >
+              {paymentMethod === "cod" && (
+                <div className="w-2 h-2 rounded-full bg-vegiano-green" />
+              )}
+            </div>
+            <div>
+              <p className="font-semibold text-sm">Cash on Delivery</p>
+              <p className="text-xs text-gray-500">
+                Pay on Delivery — No payment needed now
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <Button
+        type="button"
+        onClick={() => setCartStep(4)}
+        className="w-full bg-vegiano-green hover:bg-vegiano-green-dark text-white rounded-full h-12 text-base font-semibold mt-4 flex items-center justify-center gap-2"
+        data-ocid="cart.confirm_button"
+      >
+        {paymentMethod === "upi"
+          ? "✅ I Have Completed Payment"
+          : "Place Order"}
+      </Button>
+    </>
+  );
+
+  const renderCartStep4 = () => (
+    <div className="flex-1 flex flex-col items-center justify-center gap-5 text-center px-2">
+      <motion.div
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      >
+        <CheckCircle className="w-20 h-20 text-vegiano-green" />
+      </motion.div>
+      <div>
+        <h3 className="text-xl font-bold text-gray-900 mb-1">
+          Order Placed Successfully!
+        </h3>
+        <p className="text-sm text-gray-500">
+          Thank you for your order, {checkoutName}!
+        </p>
+      </div>
+
+      <div className="w-full bg-vegiano-green-light rounded-2xl p-4 text-left space-y-2">
+        <p className="text-xs font-semibold text-vegiano-green uppercase tracking-wide">
+          Order Summary
+        </p>
+        {cart.map((item) => (
+          <div key={item.id} className="flex justify-between text-sm">
+            <span className="text-gray-700">
+              {item.name} x{item.qty}
+            </span>
+            <span className="font-medium">₹{item.priceNum * item.qty}</span>
+          </div>
+        ))}
+        <Separator className="my-1" />
+        <div className="flex justify-between text-sm font-bold">
+          <span>Total</span>
+          <span className="text-vegiano-green">₹{cartTotal}</span>
+        </div>
+        <div className="text-xs text-gray-500 pt-1">
+          Payment:{" "}
+          {paymentMethod === "upi" ? "UPI Payment" : "Cash on Delivery"}
+        </div>
+        <div className="text-xs text-gray-500">
+          Deliver to: {checkoutAddress}
+        </div>
+      </div>
+
+      <Button
+        type="button"
+        onClick={handleSendOrderToWhatsApp}
+        className="w-full bg-vegiano-green hover:bg-vegiano-green-dark text-white rounded-full h-12 text-sm font-semibold flex items-center justify-center gap-2"
+        data-ocid="cart.primary_button"
+      >
+        <MessageCircle className="w-5 h-5" /> 📲 Send Order to WhatsApp
+      </Button>
+      <button
+        type="button"
+        onClick={handleContinueShopping}
+        className="text-sm text-gray-500 hover:text-vegiano-green transition-colors underline"
+        data-ocid="cart.secondary_button"
+      >
+        Continue Shopping
+      </button>
+    </div>
+  );
+
+  const CART_STEP_TITLES: Record<CartStep, string> = {
+    1: "Your Cart",
+    2: "Checkout",
+    3: "Payment",
+    4: "Order Confirmed",
+  };
+
+  // ── Render ────────────────────────────────────────────────────────────────────
+  return (
+    <div className="min-h-screen font-poppins overflow-x-hidden">
+      {/* Sticky Header Wrapper */}
+      <div className="sticky top-0 z-50">
+        {/* Top Announcement Bar */}
+        <div className="bg-[#1B5E20] text-white py-2 px-4">
+          <div className="max-w-7xl mx-auto">
+            <p className="text-xs sm:text-sm font-medium text-center whitespace-nowrap overflow-hidden text-ellipsis">
+              🚚 Same Day Delivery &nbsp;|&nbsp; 🥬 Fresh from Farms
+              &nbsp;|&nbsp; 📞 Order on WhatsApp:{" "}
+              <a href="tel:+918293692735" className="underline font-semibold">
+                +91 82936 92735
+              </a>
+            </p>
+          </div>
+        </div>
+
+        {/* Navbar */}
+        <header
+          className={`bg-white transition-shadow duration-300 ${scrolled ? "shadow-md" : "shadow-sm"}`}
+        >
+          <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+            <button
+              type="button"
+              onClick={() => scrollTo("home")}
+              className="flex items-center gap-2 text-[#1B5E20] font-bold text-xl shrink-0"
+              data-ocid="nav.link"
+            >
+              <Leaf className="w-6 h-6 fill-current" />
+              <span className="tracking-wide">VEGIANO</span>
+            </button>
+
+            <ul className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-700">
+              {NAV_LINKS.map((l) => (
+                <li key={l.id}>
+                  <button
+                    type="button"
+                    onClick={() => scrollTo(l.id)}
+                    className="hover:text-vegiano-green transition-colors"
+                    data-ocid={`nav.${l.id}.link`}
+                  >
+                    {l.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setCartOpen(true)}
+                className="relative p-2 rounded-full hover:bg-vegiano-green-light transition-colors"
+                aria-label="Open cart"
+                data-ocid="cart.open_modal_button"
+              >
+                <ShoppingCart className="w-5 h-5 text-gray-700" />
+                {cartCount > 0 && (
+                  <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-vegiano-green text-white text-xs rounded-full border-2 border-white">
+                    {cartCount}
+                  </Badge>
+                )}
+              </button>
+              <button
+                type="button"
+                className="md:hidden p-2 rounded-full hover:bg-gray-100 transition-colors"
+                onClick={() => setMenuOpen((v) => !v)}
+                aria-label="Toggle menu"
+                data-ocid="nav.toggle"
+              >
+                {menuOpen ? (
+                  <X className="w-5 h-5" />
+                ) : (
+                  <Menu className="w-5 h-5" />
+                )}
+              </button>
+            </div>
+          </nav>
+
+          {menuOpen && (
+            <div className="md:hidden bg-white border-t border-border px-4 pb-4 pt-2 flex flex-col gap-1">
+              {NAV_LINKS.map((l) => (
+                <button
+                  key={l.id}
+                  type="button"
                   onClick={() => scrollTo(l.id)}
-                  className="hover:text-vegiano-green transition-colors"
-                  data-ocid={`nav.${l.id}.link`}
+                  className="text-left py-2 px-3 rounded-lg hover:bg-vegiano-green-light hover:text-vegiano-green text-sm font-medium transition-colors"
+                  data-ocid={`nav.mobile.${l.id}.link`}
                 >
                   {l.label}
                 </button>
-              </li>
-            ))}
-          </ul>
-
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setCartOpen(true)}
-              className="relative p-2 rounded-full hover:bg-vegiano-green-light transition-colors"
-              aria-label="Open cart"
-              data-ocid="cart.open_modal_button"
-            >
-              <ShoppingCart className="w-5 h-5 text-gray-700" />
-              {cartCount > 0 && (
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-vegiano-green text-white text-xs rounded-full border-2 border-white">
-                  {cartCount}
-                </Badge>
-              )}
-            </button>
-            <button
-              type="button"
-              className="md:hidden p-2 rounded-full hover:bg-gray-100 transition-colors"
-              onClick={() => setMenuOpen((v) => !v)}
-              aria-label="Toggle menu"
-              data-ocid="nav.toggle"
-            >
-              {menuOpen ? (
-                <X className="w-5 h-5" />
-              ) : (
-                <Menu className="w-5 h-5" />
-              )}
-            </button>
-          </div>
-        </nav>
-
-        {menuOpen && (
-          <div className="md:hidden bg-white border-t border-border px-4 pb-4 pt-2 flex flex-col gap-1">
-            {NAV_LINKS.map((l) => (
-              <button
-                key={l.id}
-                type="button"
-                onClick={() => scrollTo(l.id)}
-                className="text-left py-2 px-3 rounded-lg hover:bg-vegiano-green-light hover:text-vegiano-green text-sm font-medium transition-colors"
-                data-ocid={`nav.mobile.${l.id}.link`}
-              >
-                {l.label}
-              </button>
-            ))}
-          </div>
-        )}
-      </header>
+              ))}
+            </div>
+          )}
+        </header>
+      </div>
 
       {/* Cart Drawer */}
-      <Sheet open={cartOpen} onOpenChange={setCartOpen}>
+      <Sheet open={cartOpen} onOpenChange={handleCartSheetChange}>
         <SheetContent
           side="right"
           className="w-full sm:max-w-md flex flex-col"
@@ -376,107 +1025,33 @@ export default function App() {
         >
           <SheetHeader className="border-b border-border pb-4">
             <SheetTitle className="flex items-center gap-2 text-vegiano-green">
-              <ShoppingCart className="w-5 h-5" /> Your Cart
+              <ShoppingCart className="w-5 h-5" />
+              {CART_STEP_TITLES[cartStep]}
+              {cartStep > 1 && cartStep < 4 && (
+                <span className="ml-auto text-xs text-muted-foreground font-normal">
+                  Step {cartStep} of 3
+                </span>
+              )}
             </SheetTitle>
           </SheetHeader>
 
-          {cart.length === 0 ? (
-            <div
-              className="flex-1 flex flex-col items-center justify-center gap-3 text-muted-foreground"
-              data-ocid="cart.empty_state"
-            >
-              <ShoppingCart className="w-12 h-12 opacity-30" />
-              <p className="font-medium">Your cart is empty</p>
-              <p className="text-sm text-center">
-                Add some fresh vegetables to get started!
-              </p>
-              <Button
-                type="button"
-                onClick={() => {
-                  setCartOpen(false);
-                  scrollTo("products");
-                }}
-                className="bg-vegiano-green hover:bg-vegiano-green-dark text-white rounded-full px-6"
-                data-ocid="cart.primary_button"
+          <div className="flex-1 overflow-y-auto flex flex-col pt-2">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={cartStep}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+                className="flex-1 flex flex-col"
               >
-                Browse Products
-              </Button>
-            </div>
-          ) : (
-            <>
-              <div className="flex-1 overflow-y-auto py-4 space-y-3">
-                {cart.map((item, idx) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center gap-3 p-3 rounded-xl bg-gray-50"
-                    data-ocid={`cart.item.${idx + 1}`}
-                  >
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-14 h-14 rounded-lg object-cover"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm truncate">
-                        {item.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {item.price}/{item.unit}
-                      </p>
-                      <p className="text-xs font-medium text-vegiano-green">
-                        ₹{item.priceNum * item.qty}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => updateQty(item.id, -1)}
-                        className="w-7 h-7 rounded-full bg-white border border-border flex items-center justify-center hover:bg-vegiano-green-light transition-colors"
-                        data-ocid={`cart.secondary_button.${idx + 1}`}
-                      >
-                        <Minus className="w-3 h-3" />
-                      </button>
-                      <span className="w-6 text-center text-sm font-semibold">
-                        {item.qty}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => updateQty(item.id, 1)}
-                        className="w-7 h-7 rounded-full bg-white border border-border flex items-center justify-center hover:bg-vegiano-green-light transition-colors"
-                        data-ocid={`cart.primary_button.${idx + 1}`}
-                      >
-                        <Plus className="w-3 h-3" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => removeItem(item.id)}
-                        className="ml-1 w-7 h-7 rounded-full bg-white border border-red-200 flex items-center justify-center hover:bg-red-50 transition-colors"
-                        data-ocid={`cart.delete_button.${idx + 1}`}
-                      >
-                        <Trash2 className="w-3 h-3 text-red-400" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="border-t border-border pt-4 space-y-4">
-                <div className="flex items-center justify-between font-semibold">
-                  <span>Total</span>
-                  <span className="text-vegiano-green text-lg">
-                    ₹{cartTotal}
-                  </span>
-                </div>
-                <Button
-                  type="button"
-                  onClick={handleCartOrder}
-                  className="w-full bg-vegiano-green hover:bg-vegiano-green-dark text-white rounded-full h-12 text-base font-semibold flex items-center gap-2"
-                  data-ocid="cart.submit_button"
-                >
-                  <MessageCircle className="w-5 h-5" /> Place Order via WhatsApp
-                </Button>
-              </div>
-            </>
-          )}
+                {cartStep === 1 && renderCartStep1()}
+                {cartStep === 2 && renderCartStep2()}
+                {cartStep === 3 && renderCartStep3()}
+                {cartStep === 4 && renderCartStep4()}
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </SheetContent>
       </Sheet>
 
@@ -507,14 +1082,14 @@ export default function App() {
                 <br className="hidden sm:block" />
                 No middleman, no chemicals — just pure goodness.
               </p>
-              <div className="flex flex-wrap gap-4 fade-in-up stagger-3">
+              <div className="flex flex-wrap gap-4 mb-6 fade-in-up stagger-3">
                 <Button
                   type="button"
-                  onClick={() => scrollTo("order")}
-                  className="bg-vegiano-green hover:bg-vegiano-green-dark text-white rounded-full px-8 py-3 h-auto text-base font-semibold shadow-lg"
+                  onClick={() => window.open(WA_URL, "_blank")}
+                  className="bg-vegiano-green hover:bg-vegiano-green-dark text-white rounded-full px-8 py-3 h-auto text-base font-semibold shadow-lg flex items-center gap-2"
                   data-ocid="hero.primary_button"
                 >
-                  Order Now <ChevronRight className="ml-1 w-4 h-4" />
+                  <MessageCircle className="w-5 h-5" /> Order Now on WhatsApp
                 </Button>
                 <Button
                   type="button"
@@ -525,6 +1100,19 @@ export default function App() {
                 >
                   View Products
                 </Button>
+              </div>
+              {/* Trust badges */}
+              <div className="flex flex-wrap gap-3 fade-in-up stagger-4">
+                {["✔ 50+ Farmers", "✔ 100% Fresh", "✔ No Middleman"].map(
+                  (badge) => (
+                    <span
+                      key={badge}
+                      className="inline-flex items-center bg-white/15 backdrop-blur-sm text-white text-xs font-semibold px-3 py-1.5 rounded-full border border-white/30"
+                    >
+                      {badge}
+                    </span>
+                  ),
+                )}
               </div>
             </div>
           </div>
@@ -651,10 +1239,13 @@ export default function App() {
         <section id="order" className="py-20 bg-vegiano-green">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-10">
-              <h2 className="text-3xl sm:text-4xl font-bold text-white uppercase tracking-wide fade-in-up">
+              <div className="inline-flex items-center gap-2 bg-white/15 text-white px-4 py-2 rounded-full text-sm font-semibold mb-4 fade-in-up">
+                <Zap className="w-4 h-4" /> Takes less than 30 seconds to order
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white uppercase tracking-wide fade-in-up stagger-1">
                 Place Your Order
               </h2>
-              <p className="text-green-100 mt-3 fade-in-up stagger-1">
+              <p className="text-green-100 mt-3 fade-in-up stagger-2">
                 Fill in the form below and we&apos;ll connect via WhatsApp
                 instantly.
               </p>
@@ -743,10 +1334,11 @@ export default function App() {
               </div>
               <Button
                 type="submit"
-                className="w-full bg-vegiano-green hover:bg-vegiano-green-dark text-white rounded-full h-12 text-base font-semibold flex items-center gap-2"
+                className="w-full bg-vegiano-green hover:bg-vegiano-green-dark text-white rounded-full h-12 text-base font-semibold flex items-center justify-center gap-2"
                 data-ocid="order.submit_button"
               >
-                <MessageCircle className="w-5 h-5" /> Place Order on WhatsApp
+                <MessageCircle className="w-5 h-5" /> 🚀 Place Order Instantly
+                on WhatsApp
               </Button>
             </form>
           </div>
@@ -755,7 +1347,7 @@ export default function App() {
         {/* Delivery Info */}
         <section id="delivery" className="py-20 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
+            <div className="text-center mb-8">
               <div className="inline-block bg-vegiano-green-light text-vegiano-green px-3 py-1 rounded-full text-sm font-semibold mb-3 fade-in-up">
                 Delivery
               </div>
@@ -763,6 +1355,15 @@ export default function App() {
                 Delivery Information
               </h2>
             </div>
+
+            {/* Urgency banner */}
+            <div className="bg-amber-50 border-l-4 border-amber-500 rounded-xl p-4 mb-8 flex items-center gap-3 fade-in-up stagger-2">
+              <span className="text-2xl">🕐</span>
+              <p className="font-semibold text-amber-800">
+                Order before 12 PM → Same Day Delivery guaranteed!
+              </p>
+            </div>
+
             <div className="grid md:grid-cols-2 gap-8">
               <div className="bg-vegiano-green-light rounded-2xl p-8 fade-in-up stagger-1">
                 <div className="flex items-center gap-3 mb-5">
@@ -829,10 +1430,17 @@ export default function App() {
                     </div>
                   </div>
                 </div>
+                <p className="mt-4 text-sm text-orange-600 font-medium flex items-center gap-1.5">
+                  <span>⚠️</span> Limited delivery slots available each day —
+                  Order early!
+                </p>
               </div>
             </div>
           </div>
         </section>
+
+        {/* Social Proof */}
+        <SocialProofSection />
 
         {/* Testimonials */}
         <section id="testimonials" className="py-20 bg-gray-50">
@@ -852,11 +1460,16 @@ export default function App() {
                   className={`bg-white rounded-2xl p-8 shadow-card hover:shadow-card-hover transition-shadow duration-300 fade-in-up stagger-${i + 1}`}
                   data-ocid={`testimonials.item.${i + 1}`}
                 >
-                  <div className="flex text-yellow-400 gap-0.5 mb-4">
-                    {Array.from({ length: 5 }).map((_, j) => (
-                      // biome-ignore lint/suspicious/noArrayIndexKey: static decorative stars
-                      <Star key={j} className="w-4 h-4 fill-current" />
-                    ))}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex text-yellow-400 gap-0.5">
+                      {Array.from({ length: 5 }).map((_, j) => (
+                        // biome-ignore lint/suspicious/noArrayIndexKey: static decorative stars
+                        <Star key={j} className="w-4 h-4 fill-current" />
+                      ))}
+                    </div>
+                    <span className="text-xs bg-green-50 text-vegiano-green font-semibold px-2 py-0.5 rounded-full border border-vegiano-green/20">
+                      ✓ Verified Purchase
+                    </span>
                   </div>
                   <p className="text-gray-600 leading-relaxed mb-6 text-sm italic">
                     &ldquo;{t.quote}&rdquo;
@@ -884,7 +1497,7 @@ export default function App() {
 
         {/* Contact */}
         <section id="contact" className="py-20 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
               <div className="inline-block bg-vegiano-green-light text-vegiano-green px-3 py-1 rounded-full text-sm font-semibold mb-3 fade-in-up">
                 Get in Touch
@@ -893,7 +1506,41 @@ export default function App() {
                 Contact Us
               </h2>
             </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+            {/* Featured WhatsApp Card */}
+            <div
+              className="bg-[#1B5E20] rounded-3xl p-8 mb-6 fade-in-up stagger-2"
+              data-ocid="contact.item.1"
+            >
+              <div className="flex flex-col sm:flex-row items-center gap-6">
+                <div className="w-20 h-20 bg-white/15 rounded-2xl flex items-center justify-center shrink-0">
+                  <MessageCircle className="w-10 h-10 text-white fill-white" />
+                </div>
+                <div className="text-center sm:text-left flex-1">
+                  <p className="text-xs font-semibold text-green-300 uppercase tracking-wider mb-1">
+                    WhatsApp
+                  </p>
+                  <p className="text-2xl font-bold text-white mb-1">
+                    +91 82936 92735
+                  </p>
+                  <p className="text-green-200 text-sm">
+                    Instant Reply within minutes
+                  </p>
+                </div>
+                <a
+                  href={WA_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="shrink-0 bg-white text-[#1B5E20] hover:bg-green-50 font-semibold px-6 py-3 rounded-2xl flex items-center gap-2 transition-colors text-sm"
+                  data-ocid="contact.primary_button"
+                >
+                  <MessageCircle className="w-4 h-4" /> Start WhatsApp Chat →
+                </a>
+              </div>
+            </div>
+
+            {/* Other contact cards */}
+            <div className="grid sm:grid-cols-3 gap-5">
               {(
                 [
                   {
@@ -903,14 +1550,6 @@ export default function App() {
                     href: "tel:+918293692735",
                     bg: "bg-blue-50",
                     iconColor: "text-blue-600",
-                  },
-                  {
-                    icon: MessageCircle,
-                    label: "WhatsApp",
-                    value: "Chat with us",
-                    href: "https://wa.me/918293692735",
-                    bg: "bg-green-50",
-                    iconColor: "text-vegiano-green",
                   },
                   {
                     icon: MapPin,
@@ -941,8 +1580,8 @@ export default function App() {
                         ? "noopener noreferrer"
                         : undefined
                     }
-                    className={`${item.bg} rounded-2xl p-6 flex flex-col items-center text-center hover:scale-105 transition-transform duration-300 group fade-in-up stagger-${i + 1}`}
-                    data-ocid={`contact.item.${i + 1}`}
+                    className={`${item.bg} rounded-2xl p-6 flex flex-col items-center text-center hover:scale-105 transition-transform duration-300 fade-in-up stagger-${i + 2}`}
+                    data-ocid={`contact.item.${i + 2}`}
                   >
                     <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center mb-3 shadow-xs">
                       <Icon className={`w-6 h-6 ${item.iconColor}`} />
@@ -963,13 +1602,16 @@ export default function App() {
 
       {/* Footer */}
       <footer className="bg-vegiano-beige border-t border-vegiano-beige-dark">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8">
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
             <div>
-              <div className="flex items-center gap-2 text-vegiano-green font-bold text-xl mb-4">
+              <div className="flex items-center gap-2 text-vegiano-green font-bold text-xl mb-2">
                 <Leaf className="w-6 h-6 fill-current" />
                 <span>VEGIANO</span>
               </div>
+              <p className="text-xs text-vegiano-green font-semibold mb-3">
+                Direct from Farmers | No Storage | No Chemicals
+              </p>
               <p className="text-gray-600 text-sm leading-relaxed">
                 Farm-fresh vegetables delivered to your doorstep. Pure, organic,
                 and affordable.
@@ -1056,6 +1698,23 @@ export default function App() {
               </ul>
             </div>
           </div>
+
+          {/* Mini CTA */}
+          <div className="bg-vegiano-green-light rounded-2xl p-6 text-center mb-8">
+            <p className="font-semibold text-gray-800 mb-3">
+              Order Fresh Vegetables Now 🥬
+            </p>
+            <a
+              href={WA_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-vegiano-green hover:bg-vegiano-green-dark text-white font-semibold px-6 py-2.5 rounded-full transition-colors text-sm"
+              data-ocid="footer.primary_button"
+            >
+              <MessageCircle className="w-4 h-4" /> Order on WhatsApp →
+            </a>
+          </div>
+
           <Separator className="bg-vegiano-beige-dark mb-6" />
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-gray-500">
             <p>
@@ -1078,20 +1737,35 @@ export default function App() {
 
       {/* Floating WhatsApp Button */}
       <a
-        href="https://wa.me/918293692735"
+        href={WA_URL}
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-vegiano-green rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform duration-300 whatsapp-pulse"
+        className="fixed bottom-20 right-5 md:bottom-6 md:right-6 z-50 w-14 h-14 bg-vegiano-green rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform duration-300 whatsapp-pulse"
         aria-label="Chat on WhatsApp"
         data-ocid="nav.link"
       >
         <MessageCircle className="w-7 h-7 text-white fill-current" />
       </a>
+
+      {/* Sticky Mobile Bottom Bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white border-t border-gray-100 shadow-lg px-4 py-3">
+        <button
+          type="button"
+          onClick={() => scrollTo("order")}
+          className="w-full bg-[#1B5E20] hover:bg-vegiano-green text-white rounded-full h-12 flex items-center justify-center gap-2 font-semibold text-sm transition-colors"
+          data-ocid="mobile.primary_button"
+        >
+          <MessageCircle className="w-5 h-5" /> 🚀 Order on WhatsApp
+        </button>
+      </div>
+
+      {/* WhatsApp Popup */}
+      <WhatsAppPopup />
     </div>
   );
 }
 
-// ── Product Card ────────────────────────────────────────────────────────────────────
+// ── Product Card ─────────────────────────────────────────────────────────────
 function ProductCard({
   product,
   index,
@@ -1099,15 +1773,19 @@ function ProductCard({
 }: {
   product: Product;
   index: number;
-  onAdd: (p: Product) => void;
+  onAdd: (p: Product, qty: number) => void;
 }) {
   const [added, setAdded] = useState(false);
+  const [qty, setQty] = useState(1);
 
   const handleAdd = () => {
-    onAdd(product);
+    onAdd(product, qty);
     setAdded(true);
     setTimeout(() => setAdded(false), 1200);
   };
+
+  const decreaseQty = () => setQty((q) => Math.max(1, q - 1));
+  const increaseQty = () => setQty((q) => q + 1);
 
   return (
     <div
@@ -1118,25 +1796,74 @@ function ProductCard({
         <img
           src={product.image}
           alt={product.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
           loading="lazy"
+          style={{ transformOrigin: "center" }}
         />
-        <div className="absolute top-3 right-3">
-          <span className="bg-vegiano-green text-white text-xs font-semibold px-2.5 py-1 rounded-full">
-            Fresh Today
+
+        {/* Tag ribbon top-left */}
+        {product.tag && (
+          <div className="absolute top-0 left-0">
+            <div
+              className={`badge-ribbon px-2.5 py-1.5 text-xs font-bold text-white rounded-br-xl ${
+                product.tag === "bestseller" ? "bg-amber-500" : "bg-red-500"
+              }`}
+            >
+              {product.tag === "bestseller" ? "🏆 Best Seller" : "🔥 Popular"}
+            </div>
+          </div>
+        )}
+
+        {/* Fresh tag top-right */}
+        <div className="absolute top-2.5 right-2.5">
+          <span
+            className={`text-xs font-semibold px-2 py-1 rounded-full ${
+              product.freshTag === "limited"
+                ? "bg-orange-500 text-white"
+                : "bg-vegiano-green text-white"
+            }`}
+          >
+            {product.freshTag === "limited" ? "⚠ Limited Stock" : "Fresh Today"}
           </span>
         </div>
       </div>
-      <div className="p-5">
-        <h3 className="font-bold text-gray-900 text-base mb-1">
+
+      <div className="p-4">
+        <h3 className="font-bold text-gray-900 text-base mb-0.5">
           {product.name}
         </h3>
-        <p className="text-vegiano-green font-bold text-lg mb-4">
+        <p className="text-vegiano-green font-bold text-lg mb-3">
           {product.price}
           <span className="text-sm font-normal text-muted-foreground">
             /{product.unit}
           </span>
         </p>
+
+        {/* Quantity selector */}
+        <div className="flex items-center gap-2 mb-3">
+          <button
+            type="button"
+            onClick={decreaseQty}
+            className="w-8 h-8 rounded-full bg-vegiano-green-light border border-vegiano-green/20 flex items-center justify-center hover:bg-vegiano-green hover:text-white transition-colors"
+            data-ocid={`products.secondary_button.${index + 1}`}
+          >
+            <Minus className="w-3 h-3" />
+          </button>
+          <span className="w-8 text-center font-semibold text-sm">{qty}</span>
+          <button
+            type="button"
+            onClick={increaseQty}
+            className="w-8 h-8 rounded-full bg-vegiano-green-light border border-vegiano-green/20 flex items-center justify-center hover:bg-vegiano-green hover:text-white transition-colors"
+            data-ocid={`products.primary_button.${index + 1}`}
+          >
+            <Plus className="w-3 h-3" />
+          </button>
+          <span className="text-xs text-muted-foreground ml-1">
+            {product.unit}
+            {qty > 1 ? "s" : ""}
+          </span>
+        </div>
+
         <Button
           type="button"
           onClick={handleAdd}
@@ -1145,7 +1872,7 @@ function ProductCard({
               ? "bg-vegiano-green-light text-vegiano-green border border-vegiano-green"
               : "bg-vegiano-green hover:bg-vegiano-green-dark text-white"
           }`}
-          data-ocid={`products.primary_button.${index + 1}`}
+          data-ocid={`products.submit_button.${index + 1}`}
         >
           {added ? "✓ Added to Cart" : "Add to Cart"}
         </Button>
